@@ -22,7 +22,7 @@ export DB_PASSWORD="your_secure_password"
 🚀 Запуск однією командою (One-Command Build)
 Встановлення залежностей та запуск юніт-тестів виконується стандартними командами:
 
-Bash
+Bash```
 # 1. Встановлення залежностей
 pip install -r requirements.txt
 
