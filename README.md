@@ -37,16 +37,14 @@ pytest
 Варіант А: База даних підключена (200 OK)
 Bash
 curl -i http://localhost:8000/health
-Встав сюди скриншот термінала з відповіддю HTTP 200:
+<img width="390" height="191" alt="image" src="https://github.com/user-attachments/assets/f75f22eb-2863-4c3b-afcb-14aab8e6bb4c" />
 
-[ВСТАВ СЮДИ СКРИНШОТ #1: Результат curl для 200 OK]
 
 Варіант Б: База даних вимкнена (503 Service Unavailable)
 Bash
 curl -i http://localhost:8000/health
-Встав сюди скриншот термінала з відповіддю HTTP 503 після зупинки БД:
+<img width="1321" height="309" alt="image" src="https://github.com/user-attachments/assets/c0f901e8-06dc-4751-a1e5-9b623f4e1864" />
 
-[ВСТАВ СЮДИ СКРИНШОТ #2: Результат curl для 503 Service Unavailable]
 
 📝 Структуроване логування в JSON
 Усі логи застосунку стандартизовано під формат JSON для подальшого збору системами моніторингу (ELK / Prometheus / Grafana Loki) та виводяться безпосередньо у STDOUT.
@@ -59,10 +57,7 @@ JSON
 {"asctime": "2026-05-19 15:30:13,012", "levelname": "INFO", "message": "Running automatic DB migrations..."}
 🛑 Плавне завершення роботи (Graceful Shutdown)
 Застосунок коректно обробляє сигнал очікування завершення SIGTERM (або SIGINT), логує процес зупинки, закриває пули з'єднань з базою даних без розриву активних транзакцій та завершує роботу з кодом 0.
-
-Встав сюди скриншот консолі після відправки сигналу kill -15 <PID> або натискання Ctrl+C:
-
-[ВСТАВ СЮДИ СКРИНШОТ #3: Вивід логів при Graceful Shutdown]
+<img width="1321" height="309" alt="image" src="https://github.com/user-attachments/assets/e7f7ac13-9b57-49b7-8c2d-b023f6eb5d26" />
 
 Логи завершення роботи:
 
