@@ -13,7 +13,6 @@
 ### 🔑 Змінні оточення (Environment Variables)
 Конфігурація застосунку повністю ізольована від коду. Для запуску сервісу необхідно експортувати такі змінні (або створити файл `.env` у корені проєкту):
 
-```bash
 export DB_HOST="localhost"
 export DB_PORT="5432"
 export DB_NAME="ecommerce"
@@ -21,8 +20,7 @@ export DB_USER="postgres"
 export DB_PASSWORD="your_secure_password"
 🚀 Запуск однією командою (One-Command Build)
 Встановлення залежностей та запуск юніт-тестів виконується стандартними командами:
-
-Bash```
+bash
 # 1. Встановлення залежностей
 pip install -r requirements.txt
 
