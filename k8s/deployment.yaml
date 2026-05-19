@@ -17,7 +17,7 @@ spec:
       containers:
       - name: ecommerce-app
         # Зверни увагу: використовуємо згенерований у Lab 2 образ з GHCR
-        image: ghcr.io/IhnatkinYevhenii/ecommerce-app:latest
+        image: ghcr.io/ihnatkinyevhenii/ecommerce-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
