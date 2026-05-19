@@ -1,46 +1,73 @@
-# ecommerce-deploy
-# E-Commerce Application — Lab 0 (Readiness & Standardization)
+# 🛒 E-Commerce Service: Readiness & Standardization
+> **Lab 0** — Інфраструктурна підготовка застосунку за стандартами MLOps / DevOps. Застосунок розроблено як "Black Box", що повністю відповідає методології **12-Factor App**.
 
-### 1. Налаштування змінних оточення (Environment Variables)
-Для запуску застосунку необхідно експортувати такі змінні:
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-green.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue.svg)
+![Status](https://img.shields.io/badge/Status-Commerce--Ready-success.svg)
+
+---
+
+## 🛠 1. Налаштування та запуск (Phase 1)
+
+### 🔑 Змінні оточення (Environment Variables)
+Конфігурація застосунку повністю ізольована від коду. Для запуску сервісу необхідно експортувати такі змінні (або створити файл `.env` у корені проєкту):
+
 ```bash
 export DB_HOST="localhost"
 export DB_PORT="5432"
 export DB_NAME="ecommerce"
 export DB_USER="postgres"
 export DB_PASSWORD="your_secure_password"
+🚀 Запуск однією командою (One-Command Build)
+Встановлення залежностей та запуск юніт-тестів виконується стандартними командами:
 
-2. Підтвердження Health Check (Deep Health Check)
-БД підключена (200 OK):
-[СЮДИ ВСТАВ СКРИНШОТ: Результат команди curl -i localhost:8000/health]
-Очікувана відповідь: HTTP/1.1 200 OK, {"status": "UP", "database": "CONNECTED"}
+Bash
+# 1. Встановлення залежностей
+pip install -r requirements.txt
 
-БД вимкнена (503 Service Unavailable):
-[СЮДИ ВСТАВ СКРИНШОТ: Зупини докер з БД docker stop <db_container> і знову зроби curl -i localhost:8000/health]
-Очікувана відповідь: HTTP/1.1 503 Service Unavailable, {"status": "DOWN", "database": "DISCONNECTED"}
+# 2. Запуск тестів однією командою
+pytest
+Примітка щодо міграцій БД: Застосунок підтримує автоматичне керування схемою даних за допомогою Alembic. Під час кожного старту сервіс самостійно перевіряє та застосовує нові міграції перед підняттям HTTP-сервера.
 
-3. Приклад структурованих логів у форматі JSON
-Рядки з логів під час старту застосунку:
+🚀 2. Перевірка Production-Grade фіч (Phase 2)
+🏥 Глибока перевірка стану (Dependency-Aware Health Check)
+Сервіс повертає статус 200 OK тільки за умови успішного ping-запиту до бази даних. Якщо БД недоступна — повертається статус 503 Service Unavailable.
+
+Варіант А: База даних підключена (200 OK)
+Bash
+curl -i http://localhost:8000/health
+Встав сюди скриншот термінала з відповіддю HTTP 200:
+
+[ВСТАВ СЮДИ СКРИНШОТ #1: Результат curl для 200 OK]
+
+Варіант Б: База даних вимкнена (503 Service Unavailable)
+Bash
+curl -i http://localhost:8000/health
+Встав сюди скриншот термінала з відповіддю HTTP 503 після зупинки БД:
+
+[ВСТАВ СЮДИ СКРИНШОТ #2: Результат curl для 503 Service Unavailable]
+
+📝 Структуроване логування в JSON
+Усі логи застосунку стандартизовано під формат JSON для подальшого збору системами моніторингу (ELK / Prometheus / Grafana Loki) та виводяться безпосередньо у STDOUT.
+
+Приклад логів під час запуску (ініціалізація та міграції):
 
 JSON
-{"asctime": "2026-05-19 15:15:00,000", "levelname": "INFO", "message": "Application starting up..."}
-{"asctime": "2026-05-19 15:15:01,123", "levelname": "INFO", "message": "Running automatic DB migrations..."}
-4. Підтвердження Плавного завершення роботи (Graceful Shutdown)
-[СЮДИ ВСТАВ СКРИНШОТ: Логи в терміналі після того, як ти відправив у іншому вікні kill -15 <PID>]
+[ВСТАВ СЮДИ РЕАЛЬНІ РЯДКИ ЛОГІВ З ТЕРМІНАЛА, НАПРИКЛАД:]
+{"asctime": "2026-05-19 15:30:12,145", "levelname": "INFO", "message": "Application starting up..."}
+{"asctime": "2026-05-19 15:30:13,012", "levelname": "INFO", "message": "Running automatic DB migrations..."}
+🛑 Плавне завершення роботи (Graceful Shutdown)
+Застосунок коректно обробляє сигнал очікування завершення SIGTERM (або SIGINT), логує процес зупинки, закриває пули з'єднань з базою даних без розриву активних транзакцій та завершує роботу з кодом 0.
 
-Логи під час завершення:
+Встав сюди скриншот консолі після відправки сигналу kill -15 <PID> або натискання Ctrl+C:
+
+[ВСТАВ СЮДИ СКРИНШОТ #3: Вивід логів при Graceful Shutdown]
+
+Логи завершення роботи:
 
 JSON
-{"asctime": "2026-05-19 15:16:42,456", "levelname": "INFO", "message": "SIGTERM received. Starting graceful shutdown..."}
-{"asctime": "2026-05-19 15:16:42,457", "levelname": "INFO", "message": "Closing all database connections..."}
-{"asctime": "2026-05-19 15:16:43,458", "levelname": "INFO", "message": "Graceful shutdown complete. Exiting with code 0."}
-
----
-
-### Як це швидко протестувати для скриншотів:
-1. Запусти застосунок: `uvicorn main:app --port 8000`
-2. Зроби запит для першого скриншоту: `curl -i http://localhost:8000/health`
-3. Зупини свою локальну базу даних і зроби запит ще раз для другого скриншоту.
-4. Дізнайся PID процесу увікорна (`ps aux | grep uvicorn`) та вбий його через `kill -15 <PID>`. Скопіюй вивід з консолі у файл README.
-
-<FollowUp label="Тобі допомогти написати простий unit-тест для перевірки endpoint /health?" query="Напиши pytest тест для перевірки ендпоінту /health у FastAPI, який симулює успішне підключення до БД та помилку підключення."/></PID>
+{"asctime": "2026-05-19 15:32:00,501", "levelname": "INFO", "message": "SIGTERM received. Starting graceful shutdown..."}
+{"asctime": "2026-05-19 15:32:00,502", "levelname": "INFO", "message": "Closing all database connections..."}
+{"asctime": "2026-05-19 15:32:01,503", "levelname": "INFO", "message": "Graceful shutdown complete. Exiting with code 0."}
+Сервіс повністю готовий до деплою в кластер (Commerce-Ready).
