@@ -2,7 +2,6 @@ name: Lab 0 Infrastructure Test
 
 on: [push, pull_request]
 
-# Вмикаємо примусове використання Node.js 24 для екшинів, як просить GitHub
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
@@ -19,8 +18,9 @@ jobs:
           POSTGRES_DB: ecommerce
         ports:
           - 5432:5432
+        # Виправлено: явно додаємо прапорець -U postgres для перевірки здоров'я
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -32,7 +32,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10' # Виправлено помилку з python-state
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
@@ -49,14 +49,14 @@ jobs:
         echo "=== 1. STARTING APPLICATION ==="
         uvicorn main:app --port 8000 &
         APP_PID=$!
-        sleep 3 
+        sleep 5 
 
         echo -e "\n=== 2. TESTING HEALTH CHECK (DB ONLINE - 200 OK) ==="
         curl -i http://localhost:8000/health
 
         echo -e "\n=== 3. STOPPING DATABASE ==="
-        sudo systemctl stop postgresql || docker stop $(docker ps -q --filter ancestor=postgres:15)
-        sleep 2
+        docker stop $(docker ps -q --filter ancestor=postgres:15)
+        sleep 3
 
         echo -e "\n=== 4. TESTING HEALTH CHECK (DB OFFLINE - 503 SERVICE UNAVAILABLE) ==="
         curl -i http://localhost:8000/health
