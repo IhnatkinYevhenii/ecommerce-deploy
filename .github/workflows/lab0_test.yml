@@ -1,0 +1,63 @@
+name: Lab 0 Infrastructure Test
+
+on: [push, pull_request]
+
+jobs:
+  test-infrastructure:
+    runs-on: ubuntu-latest
+
+    # Піднімаємо реальну PostgreSQL у контейнері всередині GitHub
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: ecommerce
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-state: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Application and Test Infrastructure
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: ecommerce
+        DB_USER: postgres
+        DB_PASSWORD: password
+      run: |
+        echo "=== 1. STARTING APPLICATION ==="
+        uvicorn main:app --port 8000 &
+        APP_PID=$!
+        sleep 3 # Даємо час запуститися
+
+        echo -e "\n=== 2. TESTING HEALTH CHECK (DB ONLINE - 200 OK) ==="
+        curl -i http://localhost:8000/health
+
+        echo -e "\n=== 3. STOPPING DATABASE ==="
+        sudo systemctl stop postgresql || docker stop $(docker ps -q --filter ancestor=postgres:15)
+        sleep 2
+
+        echo -e "\n=== 4. TESTING HEALTH CHECK (DB OFFLINE - 503 SERVICE UNAVAILABLE) ==="
+        curl -i http://localhost:8000/health
+
+        echo -e "\n=== 5. SENDING SIGTERM (GRACEFUL SHUTDOWN) ==="
+        kill -15 $APP_PID
+        sleep 2
