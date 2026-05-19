@@ -1,0 +1,80 @@
+name: Lab 2 Production Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+
+# Надаємо права для запису згенерованих Docker-образів у GHCR
+permissions:
+  packages: write
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ecommerce-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Переводимо логін юзера в нижній регістр (lowercase), як вимагає лаба
+      - name: Set up Environment Variables
+        id: prep
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "IMAGE_PATH=${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_NAME }}" >> $GITHUB_ENV
+          echo "TAG_SHA=sha-${SHORT_SHA}" >> $GITHUB_ENV
+
+      # Налаштовуємо Docker Buildx (потрібен для build-push-action)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Авторизуємось у GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Збірка образу та локальне збереження для сканування Trivy
+      - name: Build image locally for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_PATH }}:latest
+
+      # Безпековий сканер Trivy (шукає вразливості в образі)
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_PATH }}:latest
+          format: 'table'
+          exit-code: '0' # Зміни на '1', якщо хочеш щоб білд падав при наявності критичних багів
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Якщо сканування пройшло успішно — пушимо в ghcr.io з двома тегами
+      - name: Build and Push to Registry
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_PATH }}:latest
+            ${{ env.IMAGE_PATH }}:${{ env.TAG_SHA }}
+
+      # Фінальна автоматична перевірка викладача
+      - name: Run Master Validation Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x ./tests/lab2_test.sh
+          ./tests/lab2_test.sh
