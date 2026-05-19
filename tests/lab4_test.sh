@@ -15,8 +15,8 @@ if [ "$REPLICAS" != "replicas: 3" ]; then
   exit 1
 fi
 
-# 3. Dry-run install (Додано прапорець --client для роботи без кластера)
+# 3. Dry-run install (Використовуємо правильний синтаксис Helm 3)
 echo "Step 3: Testing Dry-run installation..."
-helm install ecommerce ./charts/ecommerce-app --dry-run --debug --client
+helm install ecommerce ./charts/ecommerce-app --dry-run=client --debug
 
 echo "✅ SUCCESS: Lab 4 is passed!"
