@@ -6,7 +6,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue.svg)
 ![Status](https://img.shields.io/badge/Status-Commerce--Ready-success.svg)
 
----
+
 
 ## 🛠 1. Налаштування та запуск (Phase 1)
 
